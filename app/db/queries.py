@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS dishes (
 
 # Menus
 MENU_INSERT = """
-INSERT INTO menus(title, description) VALUES($1, $2);
+INSERT INTO menus(title, description) VALUES($1, $2) RETURNING id;
 """
 MENU_FETCH_ID = f"""
     SELECT *, 
@@ -49,7 +49,7 @@ MENU_SUBMENUS_COUNT = """SELECT COUNT(*) FROM submenus WHERE menu_id = $1;"""
 
 # SubMenus
 SUBMENU_INSERT = """
-INSERT INTO submenus(menu_id, title, description) VALUES($1, $2, $3)
+INSERT INTO submenus(menu_id, title, description) VALUES($1, $2, $3) RETURNING id;
 """
 SUBMENU_FETCH_ID = """
     SELECT *, 
@@ -71,7 +71,7 @@ SUBMENU_DISHES_COUNT = """SELECT COUNT(*) FROM dishes WHERE submenu_id = $1;"""
 
 # Dishes
 DISHES_INSERT = """
-INSERT INTO dishes (submenu_id, title, description, price) VALUES($1, $2, $3, $4);
+INSERT INTO dishes (submenu_id, title, description, price) VALUES($1, $2, $3, $4) RETURNING id;
 """
 DISHES_FETCH_ID = """SELECT * FROM dishes WHERE id = $1;"""
 DISHES_FETCH_SUBMENU_ID = """SELECT * FROM dishes WHERE submenu_id = $1;"""

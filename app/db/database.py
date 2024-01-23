@@ -1,8 +1,8 @@
 from typing import Dict, Tuple, List, Optional
 
-from data.config import DB_URL
-from db.queries import *
-from db.models import (
+from app.data.config import DB_URL
+from app.db.queries import *
+from app.db.models import (
     MenuModel,
     SubMenuModel,
     DishModel
@@ -34,6 +34,16 @@ class DBConnect:
         return data
 
     @staticmethod
+    async def _serial_insert(query: str, params: Optional[Tuple] = None) -> int:
+        conn: asyncpg.Connection = await asyncpg.connect(DB_URL)
+        if params:
+            _id = await conn.fetchval(query, *params)
+        else:
+            _id = await conn.fetchval(query)
+        await conn.close()
+        return _id
+
+    @staticmethod
     async def _change(query: str, params: Optional[Tuple] = None) -> None:
         conn: asyncpg.Connection = await asyncpg.connect(DB_URL)
         if params:
@@ -56,8 +66,6 @@ class Menus(DBConnect):
             return self.cache[_id]
         data = await self._fetchone(MENU_FETCH_ID, (_id,))
         _m = MenuModel(**data)
-        submenus_count = await self._fetchone(MENU_SUBMENUS_COUNT, (_m.id,))
-        _m.submenus_count = submenus_count[0] or 0
         if _m:
             self.cache[_id] = _m
         return _m
@@ -73,8 +81,11 @@ class Menus(DBConnect):
             _ms.append(_m)
         return _ms if _ms != [] else None
 
-    async def insert(self, menu_model: MenuModel) -> None:
-        await self._change(MENU_INSERT, (*menu_model.to_tuple()[1:],))
+    async def insert(self, menu_model: MenuModel) -> MenuModel:
+        _id = await self._serial_insert(MENU_INSERT, (*menu_model.to_tuple()[1:],))
+        menu_model.id = _id
+        self.cache[_id] = menu_model
+        return menu_model
 
     async def update(self, menu_model: MenuModel) -> None:
         await self._change(MENU_UPDATE_ID, (*menu_model.to_tuple(),))
@@ -107,8 +118,12 @@ class SubMenus(DBConnect):
             _sms.append(_sm)
         return _sms if _sms != [] else None
 
-    async def insert(self, submenu_model: SubMenuModel) -> None:
-        await self._change(SUBMENU_INSERT, (*submenu_model.to_tuple()[1:],))
+    async def insert(self, submenu_model: SubMenuModel) -> SubMenuModel:
+        _id = await self._serial_insert(SUBMENU_INSERT, (*submenu_model.to_tuple()[1:],))
+        submenu_model.id = _id
+        self.cache[_id] = submenu_model
+        Menus.cache[submenu_model.menu_id].submenus_count += 1
+        return submenu_model
 
     async def update(self, submenu_model: SubMenuModel) -> None:
         await self._change(SUBMENU_UPDATE_ID, (*submenu_model.to_tuple(),))
@@ -141,8 +156,12 @@ class Dishes(DBConnect):
             _ds.append(_d)
         return _ds if _ds != [] else None
 
-    async def insert(self, dishes_model: DishModel) -> None:
-        await self._change(DISHES_INSERT, (*dishes_model.to_tuple()[1:],))
+    async def insert(self, dishes_model: DishModel) -> DishModel:
+        _id = await self._serial_insert(DISHES_INSERT, (*dishes_model.to_tuple()[1:],))
+        dishes_model.id = _id
+        self.cache[_id] = dishes_model
+        SubMenus.cache[dishes_model.submenu_id].dishes_count += 1
+        return dishes_model
 
     async def update(self, dishes_model: DishModel) -> None:
         await self._change(DISHES_UPDATE_ID, (*dishes_model.to_tuple(),))

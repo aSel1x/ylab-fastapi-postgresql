@@ -1,6 +1,6 @@
-from data.config import BASE_URL
-from db.database import DataBase
-from db.models import SubMenuModel
+from app.data.config import BASE_URL
+from app.db.database import DataBase
+from app.db.models import SubMenuModel
 from fastapi import APIRouter, status
 
 submenus = APIRouter()
@@ -17,7 +17,7 @@ async def submenus_get(menu_id: int):
 @submenus.post(base_url)
 async def submenus_post(menu_id: int, submenu_model: SubMenuModel):
     submenu_model.menu_id = menu_id
-    await db.submenus.insert(submenu_model)
+    submenu_model = await db.submenus.insert(submenu_model)
     return submenu_model
 
 

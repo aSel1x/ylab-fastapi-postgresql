@@ -1,11 +1,11 @@
 import asyncio
 import uvicorn
 
-from db.database import DataBase
+from app.db.database import DataBase
 
-from routers.menus import menus
-from routers.submenus import submenus
-from routers.dishes import dishes
+from app.routers.menus import menus
+from app.routers.submenus import submenus
+from app.routers.dishes import dishes
 
 from fastapi import FastAPI
 

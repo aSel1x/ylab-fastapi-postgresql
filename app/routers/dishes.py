@@ -1,6 +1,6 @@
-from data.config import BASE_URL
-from db.database import DataBase
-from db.models import DishModel
+from app.data.config import BASE_URL
+from app.db.database import DataBase
+from app.db.models import DishModel
 from fastapi import APIRouter, status
 
 dishes = APIRouter()
@@ -17,7 +17,7 @@ async def dishes_get(submenu_id: int):
 @dishes.post(base_url)
 async def dishes_post(submenu_id: int, dishes_model: DishModel):
     dishes_model.submenu_id = submenu_id
-    await db.dishes.insert(dishes_model)
+    dishes_model = await db.dishes.insert(dishes_model)
     return dishes_model
 
 

@@ -1,4 +1,4 @@
-from db.models import (
+from app.db.models import (
     MenuModel,
     SubMenuModel,
     DishModel
