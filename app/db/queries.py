@@ -32,7 +32,10 @@ INSERT INTO menus(title, description) VALUES($1, $2) RETURNING id;
 """
 MENU_FETCH_ID = f"""
     SELECT *, 
-    (SELECT COUNT(*) FROM submenus WHERE menu_id = $1) AS submenus_count 
+    (SELECT COUNT(*) FROM submenus WHERE menu_id = $1) AS submenus_count,
+    (SELECT COUNT(*) FROM dishes WHERE submenu_id IN (
+        SELECT id FROM submenus WHERE menu_id = $1)
+    ) AS dishes_count
     FROM menus WHERE id = $1;
 """
 MENU_FETCH_ALL = """SELECT * FROM menus;"""
@@ -46,6 +49,11 @@ UPDATE menus
 """
 MENU_DELETE_ID = """DELETE FROM menus WHERE id = $1;"""
 MENU_SUBMENUS_COUNT = """SELECT COUNT(*) FROM submenus WHERE menu_id = $1;"""
+MENU_DISHES_COUNT = """
+SELECT COUNT(*) FROM dishes WHERE submenu_id IN (
+    SELECT id FROM submenus WHERE menu_id = $1
+)
+"""
 
 # SubMenus
 SUBMENU_INSERT = """

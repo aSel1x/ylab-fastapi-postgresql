@@ -1,7 +1,7 @@
 from app.data.config import BASE_URL
 from app.db.database import DataBase
 from app.db.models import MenuModel
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, HTTPException
 
 menus = APIRouter()
 db = DataBase()
@@ -14,7 +14,7 @@ async def menus_get():
     return data
 
 
-@menus.post(base_url)
+@menus.post(base_url, status_code=status.HTTP_201_CREATED)
 async def menus_post(menu_model: MenuModel):
     menu_model = await db.menus.insert(menu_model)
     return menu_model
@@ -23,7 +23,9 @@ async def menus_post(menu_model: MenuModel):
 @menus.get(base_url+"/{_id}")
 async def menus_get_id(_id: int):
     data = await db.menus.get_id(_id)
-    return data
+    if data is not None:
+        return data
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="menu not found")
 
 
 @menus.patch(base_url+"/{_id}")

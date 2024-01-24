@@ -1,15 +1,19 @@
 from decimal import Decimal
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
 
 class DishModel(BaseModel):
-    id: Optional[int] = None
+    id: Union[int, str] = None
     submenu_id: Optional[int] = None
     title: str
     description: str
     price: Decimal
+
+    @field_serializer("id")
+    def serialize_message(self, _id: str | int, _info):
+        return str(_id)
 
     def to_tuple(self) -> Tuple:
         return (
@@ -22,11 +26,15 @@ class DishModel(BaseModel):
 
 
 class SubMenuModel(BaseModel):
-    id: Optional[int] = None
+    id: Union[int, str] = None
     menu_id: Optional[int] = None
     title: str
     description: str
     dishes_count: Optional[int] = 0
+
+    @field_serializer("id")
+    def serialize_message(self, _id: str | int, _info):
+        return str(_id)
 
     def to_tuple(self) -> Tuple:
         return (
@@ -38,10 +46,15 @@ class SubMenuModel(BaseModel):
 
 
 class MenuModel(BaseModel):
-    id: Optional[int] = None
+    id: Union[int, str] = None
     title: str
     description: str
     submenus_count: Optional[int] = 0
+    dishes_count: Optional[int] = 0
+
+    @field_serializer("id")
+    def serialize_message(self, _id: str | int, _info):
+        return str(_id)
 
     def to_tuple(self) -> Tuple:
         return (
