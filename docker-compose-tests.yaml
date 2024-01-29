@@ -9,7 +9,7 @@ services:
     environment:
       TEST_MODE: 1
       DB_HOST: "tests_postgres_ylab"
-      DB_USER: "${DB_TEST_USER}"
+      DB_USER: "postgres"
       DB_PASSWORD: "${DB_TEST_PASSWORD}"
       DB_NAME: "${DB_TEST_NAME}"
       DB_PORT: "${DB_TEST_PORT}"
@@ -29,9 +29,9 @@ services:
     image: postgres:15.1-alpine
     environment:
       POSTGRES_DB: "${DB_TEST_NAME}"
-      POSTGRES_USER: "${DB_TEST_USER}"
+      POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "${DB_TEST_PASSWORD}"
-      PGUSER: "${DB_TEST_USER}"
+      PGUSER: "postgres"
     volumes:
       - tests-postgres-data:/var/lib/postgresql/data
     expose:

@@ -7,6 +7,5 @@
 >
 
 Запуск тестов производится командой:
-> docker-compose -f docker-compose-tests.yaml up 
+> docker-compose -f docker-compose-tests.yaml up --exit-code-from tests_restaurant_ylab
 >
-... по окончанию тестов нажмите: `ctrl+c`
