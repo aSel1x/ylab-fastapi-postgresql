@@ -32,6 +32,7 @@ async def menus_get_id(_id: int):
 async def menus_patch_id(_id: int, menu_model: MenuModel):
     menu_model.id = _id
     await db.menus.update(menu_model)
+    menu_model = await db.menus.get_id(menu_model.id)
     return menu_model
 
 

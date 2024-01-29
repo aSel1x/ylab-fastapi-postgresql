@@ -1,0 +1,56 @@
+version: '3.6'
+
+services:
+  restaurant_ylab:
+    container_name: restaurant_ylab
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      TEST_MODE: 0
+      DB_HOST: "postgres_ylab"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
+      DB_PORT: "${DB_PORT}"
+    entrypoint: sh -c "python3 -m app"
+    volumes:
+      - shared-volume:/app/generated_files
+    ports:
+      - "8000:8000"
+    networks:
+      - ylab_network
+    depends_on:
+      postgres_ylab:
+        condition: service_healthy
+
+  postgres_ylab:
+    container_name: postgres_ylab
+    image: postgres:15.1-alpine
+    environment:
+      POSTGRES_DB: "${DB_NAME}"
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      PGUSER: "${DB_USER}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
+    networks:
+      - ylab_network
+
+volumes:
+  postgres-data:
+  shared-volume:
+
+networks:
+  ylab_network:
+    name: ylab_network

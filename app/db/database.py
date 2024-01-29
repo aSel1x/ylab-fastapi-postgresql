@@ -57,6 +57,11 @@ class DBConnect:
         await self._change(CREATE_SUBMENUS_TABLE)
         await self._change(CREATE_DISHES_TABLE)
 
+    async def drop(self) -> None:
+        await self._change(DROP_MENUS_TABLE)
+        await self._change(DROP_SUBMENUS_TABLE)
+        await self._change(DROP_DISHES_TABLE)
+
 
 class Menus(DBConnect):
     cache: Dict[int, MenuModel] = {}
@@ -93,10 +98,13 @@ class Menus(DBConnect):
     async def update(self, menu_model: MenuModel) -> None:
         await self._change(MENU_UPDATE_ID, (*menu_model.to_tuple(),))
         if menu_model.id in self.cache:
-            self.cache[menu_model.id] = menu_model
+            self.cache[menu_model.id].title = menu_model.title
+            self.cache[menu_model.id].description = menu_model.description
 
     async def delete(self, _id: int) -> None:
         await self._change(MENU_DELETE_ID, (_id,))
+        SubMenus.cache.clear()
+        Dishes.cache.clear()
         if _id in self.cache:
             self.cache.pop(_id)
 
@@ -135,11 +143,14 @@ class SubMenus(DBConnect):
 
     async def update(self, submenu_model: SubMenuModel) -> None:
         await self._change(SUBMENU_UPDATE_ID, (*submenu_model.to_tuple(),))
-        self.cache[submenu_model.id] = submenu_model
+        if self.cache[submenu_model.id]:
+            self.cache[submenu_model.id].title = submenu_model.title
+            self.cache[submenu_model.id].description = submenu_model.description
 
-    async def delete(self, menu_id, _id: int) -> None:
+    async def delete(self, menu_id: int, _id: int) -> None:
         await self._change(SUBMENU_DELETE_ID, (_id,))
-        if Menus.cache[menu_id]:
+        Dishes.cache.clear()
+        if menu_id in Menus.cache:
             Menus.cache.pop(menu_id)
         if _id in self.cache:
             self.cache.pop(_id)
@@ -179,14 +190,17 @@ class Dishes(DBConnect):
 
     async def update(self, dishes_model: DishModel) -> None:
         await self._change(DISHES_UPDATE_ID, (*dishes_model.to_tuple(),))
-        self.cache[dishes_model.id] = dishes_model
+        if self.cache[dishes_model.id]:
+            self.cache[dishes_model.id].title = dishes_model.title
+            self.cache[dishes_model.id].description = dishes_model.description
+            self.cache[dishes_model.id].price = dishes_model.price
 
-    async def delete(self, menu_id, submenu_id, _id: int) -> None:
+    async def delete(self, menu_id: int, submenu_id: int, _id: int) -> None:
         await self._change(DISHES_DELETE_ID, (_id,))
-        if Menus.cache[menu_id]:
-            Menus.cache[menu_id].dishes_count -= 1
-        if SubMenus.cache[submenu_id]:
-            SubMenus.cache[submenu_id].dishes_count -= 1
+        if menu_id in Menus.cache:
+            Menus.cache.pop(menu_id)
+        if submenu_id in SubMenus.cache:
+            SubMenus.cache.pop(submenu_id)
         if _id in self.cache:
             self.cache.pop(_id)
 

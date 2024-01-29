@@ -18,4 +18,4 @@ app.include_router(dishes)
 
 if __name__ == "__main__":
     asyncio.run(db.connection.setup())
-    uvicorn.run(app)
+    uvicorn.run(app, host="0.0.0.0")

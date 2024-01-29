@@ -34,6 +34,7 @@ async def submenus_patch_id(menu_id: int, _id: int, submenu_model: SubMenuModel)
     submenu_model.menu_id = menu_id
     submenu_model.id = _id
     await db.submenus.update(submenu_model)
+    submenu_model = await db.submenus.get_id(submenu_model.id)
     return submenu_model
 
 

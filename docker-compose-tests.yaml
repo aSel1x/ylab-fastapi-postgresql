@@ -1,0 +1,56 @@
+version: '3.6'
+
+services:
+  tests_restaurant_ylab:
+    container_name: tests_restaurant_ylab
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      TEST_MODE: 1
+      DB_HOST: "tests_postgres_ylab"
+      DB_USER: "${DB_TEST_USER}"
+      DB_PASSWORD: "${DB_TEST_PASSWORD}"
+      DB_NAME: "${DB_TEST_NAME}"
+      DB_PORT: "${DB_TEST_PORT}"
+    entrypoint: sh -c "pytest tests/"
+    volumes:
+      - tests-shared-volume:/app/generated_files
+    ports:
+      - "8000:8000"
+    networks:
+      - tests_ylab_network
+    depends_on:
+      tests_postgres_ylab:
+        condition: service_healthy
+
+  tests_postgres_ylab:
+    container_name: tests_postgres_ylab
+    image: postgres:15.1-alpine
+    environment:
+      POSTGRES_DB: "${DB_TEST_NAME}"
+      POSTGRES_USER: "${DB_TEST_USER}"
+      POSTGRES_PASSWORD: "${DB_TEST_PASSWORD}"
+      PGUSER: "${DB_TEST_USER}"
+    volumes:
+      - tests-postgres-data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
+    networks:
+      - tests_ylab_network
+
+volumes:
+  tests-postgres-data:
+  tests-shared-volume:
+
+networks:
+  tests_ylab_network:
+    name: tests_ylab_network

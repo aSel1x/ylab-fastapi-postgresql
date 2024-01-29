@@ -240,3 +240,5 @@ fabric.properties
 # Other
 test.py
 .DS_Store
+tests.sh
+app.sh

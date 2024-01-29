@@ -34,6 +34,7 @@ async def dishes_patch_id(submenu_id: int, _id: int, dishes_model: DishModel):
     dishes_model.submenu_id = submenu_id
     dishes_model.id = _id
     await db.dishes.update(dishes_model)
+    dishes_model = await db.dishes.get_id(dishes_model.id)
     return dishes_model
 
 
