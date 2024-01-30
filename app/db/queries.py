@@ -33,7 +33,7 @@ DROP_DISHES_TABLE = """DROP TABLE dishes CASCADE"""
 MENU_INSERT = """
 INSERT INTO menus(title, description) VALUES($1, $2) RETURNING id;
 """
-MENU_FETCH_ID = f"""
+MENU_FETCH_ID = """
     SELECT *, 
     (SELECT COUNT(*) FROM submenus WHERE menu_id = $1) AS submenus_count,
     (SELECT COUNT(*) FROM dishes WHERE submenu_id IN (
