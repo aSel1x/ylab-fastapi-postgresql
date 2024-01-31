@@ -14,3 +14,4 @@ else:
 
 # Raspberry pi local server with hosted on PostgresSQL YLAB database
 DB_URL = f"postgresql://{db_usr}:{db_pwd}@{db_host}:{db_prt}/{db_name}"
+DB_ORM_URL = f"postgresql+asyncpg://{db_usr}:{db_pwd}@{db_host}:{db_prt}/{db_name}"

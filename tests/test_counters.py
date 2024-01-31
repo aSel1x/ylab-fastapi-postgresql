@@ -103,7 +103,11 @@ async def test_random_dishes_delete(server, test_client, cascades):
             for dish_id in dishes_ids:
                 response = await test_client.delete(f"/menus/{menu_id}/submenus/{submenu_id}/dishes/{dish_id}")
                 assert response.status_code == 200
-                cascades[menu_id][submenu_id].remove(dish_id)
+                try:
+                    cascades[menu_id][submenu_id].remove(dish_id)
+                except ValueError:
+                    #  Потому что dishes_ids иногда возвращает 2 одинаковых числа
+                    pass
 
 
 async def test_menu_counts_after_random_dishes_delete(server, test_client, cascades):
