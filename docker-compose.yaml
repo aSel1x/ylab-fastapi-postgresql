@@ -8,12 +8,12 @@ services:
       dockerfile: Dockerfile
     environment:
       TEST_MODE: 0
-      DB_HOST: "postgres_ylab"
-      DB_USER: "postgres"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
-      DB_PORT: "${DB_PORT}"
-    entrypoint: sh -c "python3 -m app"
+      POSTGRES_HOST: "postgres_ylab"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
+    entrypoint: sh -c "alembic upgrade head && python3 -m app"
     volumes:
       - shared-volume:/app/generated_files
     ports:
@@ -28,9 +28,9 @@ services:
     container_name: postgres_ylab
     image: postgres:15.1-alpine
     environment:
-      POSTGRES_DB: "${DB_NAME}"
+      POSTGRES_DB: "${POSTGRES_DATABASE}"
       POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       PGUSER: "postgres"
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -47,9 +47,26 @@ services:
     networks:
       - ylab_network
 
+  redis_ylab:
+    container_name: redis_ylab
+    image: redis:latest
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      REDIS_PORT: "6379"
+      REDIS_DATABASES: 16
+    volumes:
+      - redis-data:/root/redis
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    networks:
+      - ylab_network
+
 volumes:
   postgres-data:
   shared-volume:
+  redis-data:
 
 networks:
   ylab_network:

@@ -1,32 +1,46 @@
+import asyncio
+from typing import Any
+
 import pytest
-
-from typing import AsyncGenerator, Dict, Any
 from httpx import AsyncClient
+from sqlalchemy import NullPool
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.__main__ import app
-from app.db.database import DataBase
+from app import app
+from app.core.config import settings
+from app.database import Base
 
-db = DataBase()
+engine_test = create_async_engine(settings.pg_dns, poolclass=NullPool)
+Base.metadata.bind = engine_test
 
 
-@pytest.fixture(scope="session")
-async def server():
-    await db.connection.setup()
+@pytest.fixture(scope='session', autouse=True)
+async def prepare_db():
+    async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    await db.connection.drop()
+    async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="session")
-def store() -> Dict[str, Any]:
+@pytest.fixture(scope='session')
+def store() -> dict[str, Any]:
     return {}
 
 
-@pytest.fixture(scope="session")
-def cascades() -> Dict[int, Dict[int, list]]:
+@pytest.fixture(scope='session')
+def cascades() -> dict[int, dict[int, list]]:
     return {}
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='session')
 async def test_client() -> AsyncClient:
     async with AsyncClient(app=app, base_url='http://0.0.0.0:8000/test-api/v1') as client:
         yield client
+
+
+@pytest.fixture(scope='session')
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()

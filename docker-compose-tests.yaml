@@ -8,11 +8,11 @@ services:
       dockerfile: Dockerfile
     environment:
       TEST_MODE: 1
-      DB_HOST: "tests_postgres_ylab"
-      DB_USER: "postgres"
-      DB_PASSWORD: "${DB_TEST_PASSWORD}"
-      DB_NAME: "${DB_TEST_NAME}"
-      DB_PORT: "${DB_TEST_PORT}"
+      POSTGRES_HOST: "tests_postgres_ylab"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
     entrypoint: sh -c "pytest tests/"
     volumes:
       - tests-shared-volume:/app/generated_files
@@ -28,9 +28,9 @@ services:
     container_name: tests_postgres_ylab
     image: postgres:15.1-alpine
     environment:
-      POSTGRES_DB: "${DB_TEST_NAME}"
+      POSTGRES_DB: "${POSTGRES_DATABASE}_test"
       POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "${DB_TEST_PASSWORD}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       PGUSER: "postgres"
     volumes:
       - tests-postgres-data:/var/lib/postgresql/data
@@ -47,9 +47,26 @@ services:
     networks:
       - tests_ylab_network
 
+  tests_redis_ylab:
+    container_name: tests_redis_ylab
+    image: redis:7.2.4-alpine
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      REDIS_PORT: "6379"
+      REDIS_DATABASES: 16
+    volumes:
+      - tests-redis-data:/root/redis
+    expose:
+      - 6379
+    ports:
+      - "6379:6379"
+    networks:
+      - tests_ylab_network
+
 volumes:
   tests-postgres-data:
   tests-shared-volume:
+  tests-redis-data:
 
 networks:
   tests_ylab_network:
