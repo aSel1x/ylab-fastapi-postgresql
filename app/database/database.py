@@ -23,9 +23,9 @@ class Database:
     def __init__(
             self,
             session: AsyncSession,
-            menu: MenuRepository = None,
-            submenu: SubmenuRepository = None,
-            dish: DishRepository = None,
+            menu: MenuRepository | None = None,
+            submenu: SubmenuRepository | None = None,
+            dish: DishRepository | None = None,
     ):
         self.session = session
         self.menu = menu or MenuRepository(session=session)

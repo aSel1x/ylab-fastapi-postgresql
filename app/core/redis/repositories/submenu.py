@@ -1,7 +1,7 @@
 import pickle
 from typing import Sequence
 
-from app.database.models import Menu, Submenu
+from app.database.models import Submenu
 from app.schemas import DishScheme, MenuScheme, SubmenuScheme
 
 from .abstract import RedisRepository
@@ -9,7 +9,9 @@ from .abstract import RedisRepository
 
 class SubmenuRedisRepository(RedisRepository[Submenu]):
     def __init__(self):
-        super().__init__(type_model=Submenu)
+        super().__init__(
+            type_model=Submenu,
+        )
 
     async def save(self, submenu: Submenu) -> None:
         # Submenu:1
@@ -20,13 +22,14 @@ class SubmenuRedisRepository(RedisRepository[Submenu]):
         # Increase menu submenus
         menu_key = f'Menu:{submenu.menu_id}'
         menu_encoded = await self.redis.get(menu_key)
-        menu_decoded: MenuScheme = pickle.loads(menu_encoded)
-        menu_decoded.submenus_count += 1
-        await self.redis.set(menu_key, pickle.dumps(menu_decoded))
-        await self.redis.save()
+        if isinstance(menu_encoded, bytes):
+            menu_decoded: MenuScheme = pickle.loads(menu_encoded)
+            menu_decoded.submenus_count += 1
+            await self.redis.set(menu_key, pickle.dumps(menu_decoded))
+            await self.redis.save()
 
     async def get_by_menu_id(self, menu_id: str | int) -> Sequence[SubmenuScheme]:
-        submenus_list = []
+        submenus_list: list[SubmenuScheme] = []
 
         menu_key = f'Menu:{menu_id}'
         menu_encoded = await self.redis.get(menu_key)
@@ -36,28 +39,31 @@ class SubmenuRedisRepository(RedisRepository[Submenu]):
 
         for submenu_key in await self.redis.keys('Submenu:*'):
             submenu_encoded = await self.redis.get(submenu_key)
-            submenu_decoded: SubmenuScheme = pickle.loads(submenu_encoded)
-            if submenu_decoded.menu_id == menu_decoded.id:
-                submenus_list.append(submenu_decoded)
+            if isinstance(submenu_encoded, bytes):
+                submenu_decoded: SubmenuScheme = pickle.loads(submenu_encoded)
+                if submenu_decoded.menu_id == menu_decoded.id:
+                    submenus_list.append(submenu_decoded)
 
         return submenus_list
 
     async def delete(self, ident: int | str) -> None:
-        deleted_object: SubmenuScheme | None = await self._delete(ident)
+        deleted_object: SubmenuScheme | None = await self.pre_delete(ident)
         if deleted_object is None:
-            return
+            return None
 
         # Dishes remove
         for dish_key in await self.redis.keys('Dish:*'):
             dish_encoded = await self.redis.get(dish_key)
-            dish_decoded: DishScheme = pickle.loads(dish_encoded)
-            if dish_decoded.submenu_id == deleted_object.id:
-                await self.redis.delete(dish_key)
+            if isinstance(dish_encoded, bytes):
+                dish_decoded: DishScheme = pickle.loads(dish_encoded)
+                if dish_decoded.submenu_id == deleted_object.id:
+                    await self.redis.delete(dish_key)
 
         # Menu decrease
         menu_key = f'Menu:{deleted_object.menu_id}'
         menu_encoded = await self.redis.get(menu_key)
-        menu_decoded: MenuScheme = pickle.loads(menu_encoded)
-        menu_decoded.submenus_count -= 1
-        menu_decoded.dishes_count -= deleted_object.dishes_count
-        await self.redis.set(menu_key, pickle.dumps(menu_decoded))
+        if isinstance(menu_encoded, bytes):
+            menu_decoded: MenuScheme = pickle.loads(menu_encoded)
+            menu_decoded.submenus_count -= 1
+            menu_decoded.dishes_count -= deleted_object.dishes_count
+            await self.redis.set(menu_key, pickle.dumps(menu_decoded))

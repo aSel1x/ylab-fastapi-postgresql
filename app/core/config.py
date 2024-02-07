@@ -21,12 +21,21 @@ class Settings(BaseSettings):
 
     @property
     def pg_dns(self):
-        url = f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DATABASE}'
+        url = 'postgresql+asyncpg://{user}:{pwd}@{host}:{port}/{name}'.format(
+            user=self.POSTGRES_USER,
+            pwd=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_HOST,
+            port=self.POSTGRES_PORT,
+            name=self.POSTGRES_DATABASE,
+        )
         return url if not self.TEST_MODE else url + '_test'
 
     @property
     def redis_dns(self):
-        url = f'redis://:119733@91.201.54.16'
+        url = 'redis://:{pwd}@{host}'.format(
+            pwd=self.REDIS_PASSWORD,
+            host=self.REDIS_HOST,
+        )
         return url if not self.TEST_MODE else url + '/1'
 
     @property

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .services import *
+from .services import DishService, MenuService, SubmenuService
 
 
 class Services:
@@ -14,9 +14,9 @@ class Services:
     def __init__(
             self,
             session: AsyncSession,
-            menu: MenuService = None,
-            submenu: SubmenuService = None,
-            dish: DishService = None,
+            menu: MenuService | None = None,
+            submenu: SubmenuService | None = None,
+            dish: DishService | None = None,
     ):
         self.menu = menu or MenuService(session)
         self.submenu = submenu or SubmenuService(session)

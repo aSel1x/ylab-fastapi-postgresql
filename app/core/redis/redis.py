@@ -1,4 +1,8 @@
-from .repositories import *
+from .repositories import (
+    DishRedisRepository,
+    MenuRedisRepository,
+    SubmenuRedisRepository,
+)
 
 
 class Redis:
@@ -9,9 +13,9 @@ class Redis:
 
     def __init__(
             self,
-            menu: MenuRedisRepository = None,
-            submenu: SubmenuRedisRepository = None,
-            dish: DishRedisRepository = None,
+            menu: MenuRedisRepository | None = None,
+            submenu: SubmenuRedisRepository | None = None,
+            dish: DishRedisRepository | None = None,
     ):
         self.menu = menu or MenuRedisRepository()
         self.submenu = submenu or SubmenuRedisRepository()

@@ -2,7 +2,7 @@
 Schemas for menu.
 """
 
-from .base import BaseScheme, BaseSchemeAdd
+from .base import BaseScheme, BaseSchemeAdd, BaseSchemeError
 
 
 class MenuScheme(BaseScheme):
@@ -17,3 +17,7 @@ class MenuSchemeAdd(BaseSchemeAdd):
     """
     Schema for menu creation & modification
     """
+
+
+class MenuNotFound(BaseSchemeError):
+    detail: str = 'menu not found'

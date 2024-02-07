@@ -14,7 +14,6 @@ from .base import BaseService
 
 class DishService(BaseService[Dish]):
 
-    type_model: Dish
     redis_repository: DishRedisRepository
     db_repository: DishRepository
 

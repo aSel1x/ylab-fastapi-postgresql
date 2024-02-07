@@ -47,4 +47,6 @@ repos:
     rev: v0.991
     hooks:
     -   id: mypy
-        exclude: 'migrations'
+        additional_dependencies:
+            - types-redis==4.6.0
+        exclude: 'alembic'

@@ -5,7 +5,7 @@ from typing import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Menu, Submenu
+from ..models import Dish, Submenu
 from .abstract import Repository
 
 
@@ -31,6 +31,6 @@ class SubmenuRepository(Repository[Submenu]):
         await self.session.commit()
         return new_submenu
 
-    async def get_by_menu_id(self, menu_id: int | str) -> Sequence[Submenu]:
+    async def get_by_menu_id(self, menu_id: int | str) -> Sequence[Submenu] | None:
         submenus = await self.get_many(Submenu.menu_id == menu_id)
         return submenus

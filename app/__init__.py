@@ -26,4 +26,3 @@ app.add_middleware(
 )
 
 app.include_router(api.api_router, prefix=settings.base_url)
-print(app.routes)

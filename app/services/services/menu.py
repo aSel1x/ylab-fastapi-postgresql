@@ -13,7 +13,6 @@ from .base import BaseService
 
 class MenuService(BaseService[Menu]):
 
-    type_model: Menu
     redis_repository: MenuRedisRepository
     db_repository: MenuRepository
 
@@ -36,8 +35,8 @@ class MenuService(BaseService[Menu]):
         await self.redis_repository.save(new_menu)
         return new_menu
 
-    async def get_all(self) -> Sequence[Menu] | Sequence[MenuScheme]:
-        cache = await self.redis_repository.get_all()
+    async def get_all(self) -> Sequence[Menu] | Sequence[MenuScheme] | None:
+        cache: Sequence[MenuScheme] | None = await self.redis_repository.get_all()
         if cache is not None:
             return cache
         return await self.db_repository.get_many()

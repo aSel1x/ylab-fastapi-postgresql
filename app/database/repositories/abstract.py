@@ -21,7 +21,7 @@ class Repository(Generic[AbstractModel]):
         self.type_model = type_model
         self.session = session
 
-    async def get(self, ident: int | str) -> AbstractModel:
+    async def get(self, ident: int | str) -> AbstractModel | None:
         return await self.session.get(entity=self.type_model, ident=ident)
 
     async def get_by_where(self, whereclause) -> AbstractModel | None:
@@ -29,7 +29,7 @@ class Repository(Generic[AbstractModel]):
         return (await self.session.execute(statement)).unique().scalar_one_or_none()
 
     async def get_many(
-        self, whereclause=None, limit: int = None, order_by=None
+        self, whereclause=None, limit: int | None = None, order_by=None
     ) -> Sequence[AbstractModel] | None:
         statement = select(self.type_model).limit(limit).order_by(order_by)
         if whereclause:
@@ -45,10 +45,10 @@ class Repository(Generic[AbstractModel]):
         statement = delete(self.type_model).where(whereclause)
         await self.session.execute(statement)
 
-    async def update(self, ident: int, **values):
-        statement = update(self.type_model).values(**values).where(self.type_model.id == ident)
+    async def update(self, ident: int | str, **values):
+        statement = update(self.type_model).values(**values).where(self.type_model.id == int(ident))
         await self.session.execute(statement)
 
     @abc.abstractmethod
-    async def new(self, *args, **kwargs) -> None:
+    async def new(self, *args, **kwargs) -> AbstractModel:
         ...

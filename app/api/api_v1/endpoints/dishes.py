@@ -1,33 +1,37 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api import depends
-from app.schemas.dish import DishScheme, DishSchemeAdd
+from app.schemas.dish import DishNotFound, DishScheme, DishSchemeAdd
 from app.services import Services
 
 router = APIRouter()
 
 
+responses = {
+    404: {
+        'description': 'Not found',
+        'model': DishNotFound
+    }
+}
+
+
 @router.get('', response_model=list[DishScheme])
-async def get(menu_id, submenu_id: int, service: Services = Depends(depends.get_services)):
-    dishes = await service.dish.get_by_submenu_id(submenu_id)
-    return dishes
+async def get_dishes(submenu_id: int, service: Services = Depends(depends.get_services)):
+    return await service.dish.get_by_submenu_id(submenu_id)
 
 
 @router.post('', response_model=DishScheme, status_code=status.HTTP_201_CREATED)
-async def post(menu_id: int, submenu_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
-    new_dish = await service.dish.new(
+async def post_dish(submenu_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
+    return await service.dish.new(
         title=dish.title,
         description=dish.description,
         price=dish.price,
         submenu_id=submenu_id,
     )
-    return new_dish
 
 
-@router.get('/{dish_id}', response_model=DishScheme)
-async def get_id(menu_id: int, submenu_id: int, dish_id: int, service: Services = Depends(depends.get_services)):
+@router.get('/{dish_id}', response_model=DishScheme, responses={**responses})
+async def get_dish_id(dish_id: int, service: Services = Depends(depends.get_services)):
     dish = await service.dish.get_id(dish_id)
     if dish is not None:
         return dish
@@ -35,12 +39,11 @@ async def get_id(menu_id: int, submenu_id: int, dish_id: int, service: Services 
 
 
 @router.patch('/{dish_id}', response_model=DishScheme)
-async def patch_id(menu_id: int, submenu_id: int, dish_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
+async def patch_dish_id(dish_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
     await service.dish.update(dish_id, dish)
-    updated_dish = await service.dish.get_id(dish_id)
-    return updated_dish
+    return await service.dish.get_id(dish_id)
 
 
 @router.delete('/{dish_id}', status_code=status.HTTP_200_OK)
-async def dishes_delete_id(menu_id: int, submenu_id: int, dish_id: int, service: Services = Depends(depends.get_services)):
+async def delete_dish_id(dish_id: int, service: Services = Depends(depends.get_services)):
     await service.dish.delete(dish_id)

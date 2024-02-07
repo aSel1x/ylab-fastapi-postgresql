@@ -1,11 +1,10 @@
 """
 Menu repository.
 """
-from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import Menu
+from ..models import Menu, Submenu
 from .abstract import Repository
 
 

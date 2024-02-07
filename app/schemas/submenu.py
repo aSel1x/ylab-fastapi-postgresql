@@ -2,7 +2,7 @@
 Schemas for submenu.
 """
 
-from .base import BaseScheme, BaseSchemeAdd
+from .base import BaseScheme, BaseSchemeAdd, BaseSchemeError
 
 
 class SubmenuScheme(BaseScheme):
@@ -17,3 +17,7 @@ class SubmenuSchemeAdd(BaseSchemeAdd):
     """
     Schema for submenu creation & modification
     """
+
+
+class SubmenuNotFound(BaseSchemeError):
+    detail: str = 'submenu not found'

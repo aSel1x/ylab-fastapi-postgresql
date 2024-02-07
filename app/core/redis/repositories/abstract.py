@@ -6,10 +6,9 @@ from redis import asyncio as aioredis
 
 from app.core.config import settings
 from app.database import Base
-from app.schemas import BaseScheme
 
-AbstractModel = TypeVar('AbstractModel', bound=Base)
-AbstractScheme = TypeVar('AbstractScheme', bound=BaseScheme)
+AbstractModel = TypeVar('AbstractModel')
+AbstractScheme = TypeVar('AbstractScheme')
 
 
 class RedisRepository(Generic[AbstractModel]):
@@ -27,17 +26,19 @@ class RedisRepository(Generic[AbstractModel]):
     async def get(self, ident: int | str) -> AbstractScheme | None:
         key = f'{self.type_model.__name__}:{ident}'
         encoded_data = await self.redis.get(key)
-        if encoded_data is None:
-            return
-        return pickle.loads(encoded_data)
+        if encoded_data:
+            decoded_data: AbstractScheme = pickle.loads(encoded_data)
+            return decoded_data
+        return None
 
-    async def _delete(self, ident: int | str) -> AbstractScheme | None:
+    async def pre_delete(self, ident: int | str) -> AbstractScheme | None:
         key = f'{self.type_model.__name__}:{ident}'
         encoded_data = await self.redis.get(key)
-        await self.redis.delete(key)
-        if encoded_data is None:
-            return
-        return pickle.loads(encoded_data)
+        if encoded_data:
+            decoded_data: AbstractScheme = pickle.loads(encoded_data)
+            await self.redis.delete(key)
+            return decoded_data
+        return None
 
     async def get_all(self) -> Sequence[AbstractScheme] | None:
         # AnyModel:*
@@ -45,7 +46,9 @@ class RedisRepository(Generic[AbstractModel]):
         keys = await self.redis.keys(f'{self.type_model.__name__}:*')
         for key in keys:
             encoded_data = await self.redis.get(key)
-            any_list.append(pickle.loads(encoded_data))
+            if isinstance(encoded_data, bytes):
+                decoded_data = pickle.loads(encoded_data)
+                any_list.append(decoded_data)
         return any_list if any_list != [] else None
 
     @abc.abstractmethod

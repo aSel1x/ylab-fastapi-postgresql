@@ -27,3 +27,7 @@ class BaseSchemeAdd(BaseModel):
     """
     title: str
     description: str
+
+
+class BaseSchemeError(BaseModel):
+    pass

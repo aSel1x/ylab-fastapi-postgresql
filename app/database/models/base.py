@@ -3,8 +3,7 @@ Base model
 """
 
 from sqlalchemy import Integer, MetaData
-from sqlalchemy.ext.declarative import as_declarative
-from sqlalchemy.orm import Mapped, declared_attr, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 metadata = MetaData(
     naming_convention={
@@ -17,8 +16,9 @@ metadata = MetaData(
 )
 
 
-@as_declarative(metadata=metadata)
-class Base:
+class Base(DeclarativeBase):
+    metadata = metadata
+
     @classmethod
     @declared_attr
     def __tablename__(cls):
