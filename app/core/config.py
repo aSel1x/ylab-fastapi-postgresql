@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,32 +11,26 @@ class Settings(BaseSettings):
     TEST_MODE: int
 
     # POSTGRES DATABASE
-    POSTGRES_HOST: str
-    POSTGRES_PORT: int
-    POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DATABASE: str
 
     # REDIS DATABASE
-    REDIS_HOST: str
-    REDIS_PASSWORD: str
 
     @property
     def pg_dns(self):
         url = 'postgresql+asyncpg://{user}:{pwd}@{host}:{port}/{name}'.format(
-            user=self.POSTGRES_USER,
+            user=os.environ['POSTGRES_USER'],
             pwd=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_HOST,
-            port=self.POSTGRES_PORT,
+            host=os.environ['POSTGRES_HOST'],
+            port=os.environ['POSTGRES_PORT'],
             name=self.POSTGRES_DATABASE,
         )
         return url if not self.TEST_MODE else url + '_test'
 
     @property
     def redis_dns(self):
-        url = 'redis://:{pwd}@{host}'.format(
-            pwd=self.REDIS_PASSWORD,
-            host=self.REDIS_HOST,
+        url = 'redis://{host}:6379'.format(
+            host=os.environ['REDIS_HOST'],
         )
         return url if not self.TEST_MODE else url + '/1'
 

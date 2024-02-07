@@ -13,6 +13,7 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
+      REDIS_HOST: "redis_ylab"
     entrypoint: sh -c "alembic upgrade head && python3 -m app"
     volumes:
       - shared-volume:/app/generated_files
@@ -49,9 +50,8 @@ services:
 
   redis_ylab:
     container_name: redis_ylab
-    image: redis:latest
+    image: redis:7.2.4-alpine
     environment:
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
       REDIS_PORT: "6379"
       REDIS_DATABASES: 16
     volumes:

@@ -40,35 +40,6 @@ def reverse(view: Callable, **params) -> str:
     raise Exception
 
 
-def menus_path(menu_id: int | str | None = None) -> str:
-    if menu_id:
-        return app.url_path_for('get_menu_id', menu_id=menu_id)
-    return app.url_path_for('get_menus')
-
-
-def submenus_path(
-        menu_id: int | str,
-        submenu_id: int | str | None = None,
-) -> str:
-    if submenu_id:
-        return app.url_path_for(
-            'get_submenu_id', menu_id=menu_id, submenu_id=submenu_id
-        )
-    return app.url_path_for('get_submenus', menu_id=menu_id)
-
-
-def dishes_path(
-        menu_id: int | str,
-        submenu_id: int | str,
-        dish_id: int | str | None = None
-) -> str:
-    if dish_id:
-        return app.url_path_for(
-            'get_dish_id', menu_id=menu_id, submenu_id=submenu_id, dish_id=dish_id
-        )
-    return app.url_path_for('get_dishes', menu_id=menu_id, submenu_id=submenu_id)
-
-
 @pytest.fixture(scope='session')
 async def test_client() -> AsyncClient:
     async with AsyncClient(app=app, base_url='http://0.0.0.0:8000') as client:
