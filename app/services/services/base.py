@@ -1,13 +1,14 @@
 import abc
 from typing import Generic, TypeVar
 
+from pydantic import BaseModel
+
 from app.core.redis.repositories import RedisRepository
 from app.database import Base
 from app.database.repositories import Repository
-from app.schemas import BaseScheme
 
 AbstractModel = TypeVar('AbstractModel', bound=Base)
-AbstractScheme = TypeVar('AbstractScheme', bound=BaseScheme)
+AbstractScheme = TypeVar('AbstractScheme', bound=BaseModel)
 
 
 class BaseService(Generic[AbstractModel]):
@@ -44,7 +45,7 @@ class BaseService(Generic[AbstractModel]):
         new_model: AbstractModel | None = await self.db_repository.get(ident)
         if new_model is None:
             return None
-        await self.redis_repository.save(new_model)
+        await self.redis_repository.update(new_model)
         return new_model
 
     @abc.abstractmethod

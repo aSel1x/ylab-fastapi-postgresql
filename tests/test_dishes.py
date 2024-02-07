@@ -1,3 +1,7 @@
+from typing import Any
+
+from httpx import AsyncClient
+
 from app.api.api_v1.endpoints.dishes import (
     delete_dish_id,
     get_dish_id,
@@ -11,7 +15,7 @@ from app.api.api_v1.endpoints.submenus import post_submenu
 from .conftest import reverse
 
 
-async def test_post_menu(test_client, store):
+async def test_post_menu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My menu 1',
         'description': 'My description for menu 1'
@@ -29,7 +33,7 @@ async def test_post_menu(test_client, store):
     store.update(menu_id=response_json['id'])
 
 
-async def test_post_submenu(test_client, store):
+async def test_post_submenu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My submenu 1',
         'description': 'My description for submenu 1'
@@ -50,7 +54,7 @@ async def test_post_submenu(test_client, store):
     store.update(submenu_id=response_json['id'])
 
 
-async def test_get_empty_dishes(test_client, store):
+async def test_get_empty_dishes(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dishes,
@@ -62,7 +66,7 @@ async def test_get_empty_dishes(test_client, store):
     assert response.json() == []
 
 
-async def test_post_dish(test_client, store):
+async def test_post_dish(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My dish 1',
         'description': 'My description for dish 1',
@@ -85,7 +89,7 @@ async def test_post_dish(test_client, store):
     store.update(dish=response_json)
 
 
-async def test_get_dish_id(test_client, store):
+async def test_get_dish_id(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dish_id,
@@ -98,7 +102,7 @@ async def test_get_dish_id(test_client, store):
     assert response.json() == store['dish']
 
 
-async def test_get_dishes(test_client, store):
+async def test_get_dishes(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dishes,
@@ -110,7 +114,7 @@ async def test_get_dishes(test_client, store):
     assert response.json() == [store['dish']]
 
 
-async def test_patch_dish(test_client, store):
+async def test_patch_dish(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My updated dish 1',
         'description': 'My updated description for dish 1',
@@ -133,7 +137,7 @@ async def test_patch_dish(test_client, store):
     assert response_json == store['dish']
 
 
-async def test_get_dish_id_after_patch(test_client, store):
+async def test_get_dish_id_after_patch(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dish_id,
@@ -146,7 +150,7 @@ async def test_get_dish_id_after_patch(test_client, store):
     assert response.json() == store['dish']
 
 
-async def test_get_dishes_after_patch(test_client, store):
+async def test_get_dishes_after_patch(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dishes,
@@ -158,7 +162,7 @@ async def test_get_dishes_after_patch(test_client, store):
     assert response.json() == [store['dish']]
 
 
-async def test_delete_dish(test_client, store):
+async def test_delete_dish(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.delete(
         reverse(
             delete_dish_id,
@@ -170,7 +174,7 @@ async def test_delete_dish(test_client, store):
     assert response.status_code == 200
 
 
-async def test_get_dish_id_after_delete(test_client, store):
+async def test_get_dish_id_after_delete(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dish_id,
@@ -182,7 +186,7 @@ async def test_get_dish_id_after_delete(test_client, store):
     assert response.status_code == 404
 
 
-async def test_get_dishes_after_delete(test_client, store):
+async def test_get_dishes_after_delete(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_dishes,
@@ -194,7 +198,7 @@ async def test_get_dishes_after_delete(test_client, store):
     assert response.json() == []
 
 
-async def test_delete_menu(test_client, store):
+async def test_delete_menu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.delete(
         reverse(
             delete_menu_id,

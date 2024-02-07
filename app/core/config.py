@@ -8,7 +8,7 @@ class Settings(BaseSettings):
         env_file='.env', env_file_encoding='utf-8', case_sensitive=True
     )
 
-    TEST_MODE: int
+    TEST_MODE: bool = os.environ['TEST_MODE']  # type: ignore
 
     # POSTGRES DATABASE
     POSTGRES_PASSWORD: str
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         url = 'redis://{host}:6379'.format(
             host=os.environ['REDIS_HOST'],
         )
-        return url if not self.TEST_MODE else url + '/1'
+        return url + '/0' if not self.TEST_MODE else url + '/1'
 
     @property
     def base_url(self):

@@ -37,7 +37,8 @@ async def get_submenu_id(submenu_id: int, service: Services = Depends(depends.ge
 
 
 @router.patch('/{submenu_id}', response_model=SubmenuScheme)
-async def patch_submenu_id(submenu_id: int, submenu: SubmenuSchemeAdd, service: Services = Depends(depends.get_services)):
+async def patch_submenu_id(submenu_id: int, submenu: SubmenuSchemeAdd,
+                           service: Services = Depends(depends.get_services)):
     await service.submenu.update(submenu_id, submenu)
     return await service.submenu.get_id(submenu_id)
 

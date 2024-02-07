@@ -1,3 +1,7 @@
+from typing import Any
+
+from httpx import AsyncClient
+
 from app.api.api_v1.endpoints.menus import delete_menu_id, post_menu
 from app.api.api_v1.endpoints.submenus import (
     delete_submenu_id,
@@ -10,7 +14,7 @@ from app.api.api_v1.endpoints.submenus import (
 from .conftest import reverse
 
 
-async def test_post_menu(test_client, store):
+async def test_post_menu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My menu 1',
         'description': 'My description for menu 1'
@@ -28,7 +32,7 @@ async def test_post_menu(test_client, store):
     store.update(menu_id=response_json['id'])
 
 
-async def test_get_empty_submenus(test_client, store):
+async def test_get_empty_submenus(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenus,
@@ -39,7 +43,7 @@ async def test_get_empty_submenus(test_client, store):
     assert response.json() == []
 
 
-async def test_post_submenu(test_client, store):
+async def test_post_submenu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My submenu 1',
         'description': 'My description for submenu 1'
@@ -60,7 +64,7 @@ async def test_post_submenu(test_client, store):
     store.update(submenu=response_json)
 
 
-async def test_get_submenu_id(test_client, store):
+async def test_get_submenu_id(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenu_id,
@@ -72,7 +76,7 @@ async def test_get_submenu_id(test_client, store):
     assert response.json() == store['submenu']
 
 
-async def test_get_submenus(test_client, store):
+async def test_get_submenus(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenus,
@@ -83,7 +87,7 @@ async def test_get_submenus(test_client, store):
     assert response.json() == [store['submenu']]
 
 
-async def test_patch_submenu(test_client, store):
+async def test_patch_submenu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     data = {
         'title': 'My updated submenu 1',
         'description': 'My updated description for submenu 1'
@@ -103,7 +107,7 @@ async def test_patch_submenu(test_client, store):
     assert response_json == store['submenu']
 
 
-async def test_get_submenu_id_after_patch(test_client, store):
+async def test_get_submenu_id_after_patch(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenu_id,
@@ -115,7 +119,7 @@ async def test_get_submenu_id_after_patch(test_client, store):
     assert response.json() == store['submenu']
 
 
-async def test_get_submenus_after_patch(test_client, store):
+async def test_get_submenus_after_patch(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenus,
@@ -126,7 +130,7 @@ async def test_get_submenus_after_patch(test_client, store):
     assert response.json() == [store['submenu']]
 
 
-async def test_delete_submenu(test_client, store):
+async def test_delete_submenu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.delete(
         reverse(
             delete_submenu_id,
@@ -137,7 +141,7 @@ async def test_delete_submenu(test_client, store):
     assert response.status_code == 200
 
 
-async def test_get_submenu_id_after_delete(test_client, store):
+async def test_get_submenu_id_after_delete(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenu_id,
@@ -148,7 +152,7 @@ async def test_get_submenu_id_after_delete(test_client, store):
     assert response.status_code == 404
 
 
-async def test_get_submenus_after_delete(test_client, store):
+async def test_get_submenus_after_delete(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.get(
         reverse(
             get_submenus,
@@ -159,7 +163,7 @@ async def test_get_submenus_after_delete(test_client, store):
     assert response.json() == []
 
 
-async def test_delete_menu(test_client, store):
+async def test_delete_menu(test_client: AsyncClient, store: dict[str, Any]) -> None:
     response = await test_client.delete(
         reverse(
             delete_menu_id,

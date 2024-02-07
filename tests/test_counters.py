@@ -1,5 +1,7 @@
 import random
 
+from httpx import AsyncClient
+
 from app.api.api_v1.endpoints.dishes import delete_dish_id, post_dish
 from app.api.api_v1.endpoints.menus import delete_menu_id, get_menu_id, post_menu
 from app.api.api_v1.endpoints.submenus import (
@@ -11,7 +13,7 @@ from app.api.api_v1.endpoints.submenus import (
 from .conftest import reverse
 
 
-async def test_post_menu_and_zero_counts(test_client, cascades):
+async def test_post_menu_and_zero_counts(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     data = {
         'title': 'My menu 1',
         'description': 'My description for menu 1'
@@ -30,7 +32,7 @@ async def test_post_menu_and_zero_counts(test_client, cascades):
     cascades[menu_id] = {}
 
 
-async def test_post_submenus_and_zero_dishes(test_client, cascades):
+async def test_post_submenus_and_zero_dishes(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         for x in range(1, 4):
             data = {
@@ -53,7 +55,7 @@ async def test_post_submenus_and_zero_dishes(test_client, cascades):
             cascades[menu_id][submenu_id] = []
 
 
-async def test_post_dishes(test_client, cascades):
+async def test_post_dishes(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         for submenu_id in cascades[menu_id]:
             for x in range(1, random.randint(3, 10)):
@@ -78,7 +80,7 @@ async def test_post_dishes(test_client, cascades):
                 cascades[menu_id][submenu_id].append(dish_id)
 
 
-async def test_menu_counts(test_client, cascades):
+async def test_menu_counts(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
 
     for menu_id in cascades:
         dishes_count = 0
@@ -97,7 +99,7 @@ async def test_menu_counts(test_client, cascades):
         assert response_json.get('dishes_count') == dishes_count
 
 
-async def test_submenu_counts(test_client, cascades):
+async def test_submenu_counts(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         for submenu_id in cascades[menu_id]:
             response = await test_client.get(
@@ -112,7 +114,7 @@ async def test_submenu_counts(test_client, cascades):
             assert response_json.get('dishes_count') == len(cascades[menu_id][submenu_id])
 
 
-async def test_delete_random_submenu(test_client, cascades):
+async def test_delete_random_submenu(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         submenu_id = random.choice(list(cascades[menu_id].keys()))
         response = await test_client.delete(
@@ -126,7 +128,7 @@ async def test_delete_random_submenu(test_client, cascades):
         cascades[menu_id].pop(submenu_id)
 
 
-async def test_menu_counts_after_submenu_delete(test_client, cascades):
+async def test_menu_counts_after_submenu_delete(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         dishes_count = 0
         for submenu_id in cascades[menu_id]:
@@ -144,7 +146,7 @@ async def test_menu_counts_after_submenu_delete(test_client, cascades):
         assert response_json.get('dishes_count') == dishes_count
 
 
-async def test_random_dishes_delete(test_client, cascades):
+async def test_random_dishes_delete(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         for submenu_id in cascades[menu_id]:
             dishes_ids = random.choices(cascades[menu_id][submenu_id], k=2)
@@ -165,7 +167,10 @@ async def test_random_dishes_delete(test_client, cascades):
                     pass
 
 
-async def test_menu_counts_after_random_dishes_delete(test_client, cascades):
+async def test_menu_counts_after_random_dishes_delete(
+        test_client: AsyncClient, cascades: dict[int, dict[int, list]]
+) -> None:
+
     for menu_id in cascades:
         dishes_count = 0
         for submenu_id in cascades[menu_id]:
@@ -183,7 +188,10 @@ async def test_menu_counts_after_random_dishes_delete(test_client, cascades):
         assert response_json.get('dishes_count') == dishes_count
 
 
-async def test_submenu_counts_after_random_dishes_delete(test_client, cascades):
+async def test_submenu_counts_after_random_dishes_delete(
+        test_client: AsyncClient, cascades: dict[int, dict[int, list]]
+) -> None:
+
     for menu_id in cascades:
         for submenu_id in cascades[menu_id]:
             response = await test_client.get(
@@ -198,7 +206,7 @@ async def test_submenu_counts_after_random_dishes_delete(test_client, cascades):
             assert response_json.get('dishes_count') == len(cascades[menu_id][submenu_id])
 
 
-async def test_delete_menu(test_client, cascades):
+async def test_delete_menu(test_client: AsyncClient, cascades: dict[int, dict[int, list]]) -> None:
     for menu_id in cascades:
         response = await test_client.delete(
             reverse(

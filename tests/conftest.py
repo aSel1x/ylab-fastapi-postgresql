@@ -1,8 +1,9 @@
 import asyncio
-from typing import Any, Callable
+from typing import Any, AsyncGenerator, Callable
 
 import pytest
 from httpx import AsyncClient
+from redis import asyncio as aioredis
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -12,13 +13,17 @@ from app.database import Base
 
 engine_test = create_async_engine(settings.pg_dns, poolclass=NullPool)
 Base.metadata.bind = engine_test
+redis = aioredis.from_url(settings.redis_dns)
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def prepare_db():
+async def prepare_db() -> AsyncGenerator[None, None]:
+    await redis.flushdb()
     async with engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
+    await redis.flushdb()
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
@@ -41,7 +46,7 @@ def reverse(view: Callable, **params) -> str:
 
 
 @pytest.fixture(scope='session')
-async def test_client() -> AsyncClient:
+async def test_client() -> AsyncGenerator[AsyncClient, AsyncClient]:
     async with AsyncClient(app=app, base_url='http://0.0.0.0:8000') as client:
         yield client
 
