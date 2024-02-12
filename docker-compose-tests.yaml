@@ -14,6 +14,10 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
       REDIS_HOST: "tests_redis_ylab"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      RABBIT_HOST: "rabbitmq_ylab"
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASSWORD: "${RABBIT_PASSWORD}"
     entrypoint: sh -c "pytest tests/"
     volumes:
       - tests-shared-volume:/app/generated_files
@@ -51,11 +55,13 @@ services:
   tests_redis_ylab:
     container_name: tests_redis_ylab
     image: redis:7.2.4-alpine
-    environment:
-      REDIS_PORT: "6379"
-      REDIS_DATABASES: 16
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "${REDIS_PASSWORD}"
     volumes:
-      - tests-redis-data:/root/redis
+      - tests-redis-data:/var/lib/redis/data
+      - tests-redis-config:/var/lib/redis/redis.conf
     expose:
       - 6379
     ports:
@@ -67,6 +73,7 @@ volumes:
   tests-postgres-data:
   tests-shared-volume:
   tests-redis-data:
+  tests-redis-config:
 
 networks:
   tests_ylab_network:

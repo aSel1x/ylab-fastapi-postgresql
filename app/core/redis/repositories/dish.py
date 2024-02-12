@@ -14,7 +14,8 @@ class DishRedisRepository(RedisRepository[Dish]):
             type_scheme=DishScheme
         )
 
-    async def save(self, dish: Dish) -> None:
+    async def save(self, model: Dish) -> None:
+        dish = model
         # Dish:1
         dish_key = f'{self.type_model.__name__}:{dish.id}'
         dish_decoded = DishScheme(**dish.to_dict())

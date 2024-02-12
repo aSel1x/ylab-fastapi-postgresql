@@ -1,9 +1,9 @@
 import asyncio
-from typing import Any, AsyncGenerator, Callable
+from typing import Any, AsyncGenerator, Callable, Generator
 
 import pytest
 from httpx import AsyncClient
-from redis import asyncio as aioredis
+from redis.client import Redis
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -13,19 +13,24 @@ from app.database import Base
 
 engine_test = create_async_engine(settings.pg_dns, poolclass=NullPool)
 Base.metadata.bind = engine_test
-redis = aioredis.from_url(settings.redis_dns)
 
 
 @pytest.fixture(scope='session', autouse=True)
 async def prepare_db() -> AsyncGenerator[None, None]:
-    await redis.flushdb()
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
-    await redis.flushdb()
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture(scope='session', autouse=True)
+def prepare_redis() -> Generator[Redis, Redis, None]:
+    redis: Redis = settings.redis
+    redis.flushdb()
+    yield redis
+    redis.flushdb()
 
 
 @pytest.fixture(scope='session')

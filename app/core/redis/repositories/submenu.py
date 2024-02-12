@@ -14,7 +14,8 @@ class SubmenuRedisRepository(RedisRepository[Submenu]):
             type_scheme=SubmenuScheme
         )
 
-    async def save(self, submenu: Submenu) -> None:
+    async def save(self, model: Submenu) -> None:
+        submenu = model
         # Submenu:1
         submenu_key = f'{self.type_model.__name__}:{submenu.id}'
         submenu_decoded = SubmenuScheme(**submenu.to_dict())

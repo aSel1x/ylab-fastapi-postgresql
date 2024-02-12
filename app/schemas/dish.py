@@ -4,6 +4,8 @@ Schemas for dish.
 
 from decimal import Decimal
 
+from pydantic import field_validator
+
 from .base import BaseScheme, BaseSchemeAdd, BaseSchemeError
 
 
@@ -19,7 +21,13 @@ class DishSchemeAdd(BaseSchemeAdd):
     """
     Schema for dish creation & modification
     """
-    price: Decimal
+    price: str
+
+    @field_validator('price')
+    @classmethod
+    def convert_price_to_decimal(cls, v) -> Decimal:
+        v = v.replace(',', '.')
+        return Decimal(v).quantize(Decimal('0.00'))
 
 
 class DishNotFound(BaseSchemeError):

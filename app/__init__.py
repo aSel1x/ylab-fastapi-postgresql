@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,8 +13,10 @@ app = FastAPI(openapi_url=f'{settings.base_url}/openapi.json')
 @app.middleware('http')
 async def session_services(request: Request, call_next):
     async with AsyncSession(bind=engine, expire_on_commit=False) as session:
-        request.state.services = Services(session)
+        background = BackgroundTasks()
+        request.state.services = Services(session, background)
         response = await call_next(request)
+        await background()
     return response
 
 app.add_middleware(

@@ -49,4 +49,5 @@ repos:
     -   id: mypy
         additional_dependencies:
             - types-redis==4.6.0
+            - types-requests==2.31.0
         exclude: 'alembic'

@@ -18,7 +18,7 @@ class DishRepository(Repository[Dish]):
         self,
         title: str,
         description: str,
-        price: Decimal,
+        price: Decimal | str,
         submenu_id: int
     ) -> Dish:
         new_dish = await self.session.merge(
@@ -32,6 +32,6 @@ class DishRepository(Repository[Dish]):
         await self.session.commit()
         return new_dish
 
-    async def get_by_submenu_id(self, submenu_id: int | str) -> Sequence[Dish] | None:
+    async def get_by_submenu_id(self, submenu_id: int | str) -> Sequence[Dish]:
         submenus = await self.get_many(Dish.submenu_id == submenu_id)
         return submenus

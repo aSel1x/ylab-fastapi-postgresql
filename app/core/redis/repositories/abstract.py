@@ -16,7 +16,7 @@ AbstractScheme = TypeVar('AbstractScheme', bound=BaseModel)
 class RedisRepository(Generic[AbstractModel]):
     type_model: type[Base]
     type_scheme: type[BaseScheme]
-    redis = aioredis.from_url(settings.redis_dns)
+    redis = settings.aioredis
 
     def __init__(
             self,
@@ -40,10 +40,10 @@ class RedisRepository(Generic[AbstractModel]):
         key = f'{self.type_model.__name__}:{ident}'
         encoded_data = await self.redis.get(key)
         if isinstance(encoded_data, bytes):
-            decoded_data: AbstractScheme = pickle.loads(encoded_data)
             await self.redis.delete(key)
-            return decoded_data
-        return None
+            return pickle.loads(encoded_data)
+        else:
+            return None
 
     async def update(self, model: AbstractModel) -> None:
         await self.redis.set(

@@ -4,7 +4,7 @@ Module for connect all endpoints
 
 from fastapi import APIRouter
 
-from app.api.api_v1.endpoints import dishes, menus, submenus
+from app.api.api_v1.endpoints import dishes, extra, menus, submenus
 
 api_router = APIRouter()
 api_router.include_router(
@@ -21,4 +21,9 @@ api_router.include_router(
     dishes.router,
     prefix='/menus/{menu_id}/submenus/{submenu_id}/dishes',
     tags=['dishes']
+)
+api_router.include_router(
+    extra.router,
+    prefix='',
+    tags=['extra']
 )

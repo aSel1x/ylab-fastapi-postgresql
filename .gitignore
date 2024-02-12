@@ -243,3 +243,5 @@ test.py
 tests.sh
 app.sh
 archive
+token.json
+.env.developer

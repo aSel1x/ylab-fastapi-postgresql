@@ -14,15 +14,25 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
       REDIS_HOST: "redis_ylab"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      RABBIT_HOST: "rabbitmq_ylab"
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASSWORD: "${RABBIT_PASSWORD}"
     entrypoint: sh -c "alembic upgrade head && python3 -m app"
     volumes:
       - shared-volume:/app/generated_files
+    expose:
+      - 8000
     ports:
       - "8000:8000"
     networks:
       - ylab_network
     depends_on:
       postgres_ylab:
+        condition: service_healthy
+      redis_ylab:
+        condition: service_healthy
+      rabbitmq_ylab:
         condition: service_healthy
 
   postgres_ylab:
@@ -51,22 +61,101 @@ services:
   redis_ylab:
     container_name: redis_ylab
     image: redis:7.2.4-alpine
-    environment:
-      REDIS_PORT: "6379"
-      REDIS_DATABASES: 16
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "${REDIS_PASSWORD}"
     volumes:
-      - redis-data:/root/redis
+      - redis-data:/var/lib/redis/data
+      - redis-config:/var/lib/redis/redis.conf
     expose:
       - 6379
     ports:
       - "6379:6379"
     networks:
       - ylab_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  rabbitmq_ylab:
+    container_name: rabbitmq_ylab
+    image: rabbitmq:3.12.12-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBIT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBIT_PASSWORD}"
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq/data
+    expose:
+      - 5672
+    ports:
+      - "5672:5672"
+    networks:
+      - ylab_network
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: .
+    environment:
+      TEST_MODE: 0
+      POSTGRES_HOST: "postgres_ylab"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
+      REDIS_HOST: "redis_ylab"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      RABBIT_HOST: "rabbitmq_ylab"
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASSWORD: "${RABBIT_PASSWORD}"
+    entrypoint: sh -c "celery -A app.core.celery.celery:celery worker --loglevel=INFO"
+    networks:
+      - ylab_network
+    depends_on:
+      postgres_ylab:
+        condition: service_healthy
+      redis_ylab:
+        condition: service_healthy
+      rabbitmq_ylab:
+        condition: service_healthy
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: .
+    environment:
+      TEST_MODE: 0
+      POSTGRES_HOST: "postgres_ylab"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
+      REDIS_HOST: "redis_ylab"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      RABBIT_HOST: "rabbitmq_ylab"
+      RABBIT_USER: "${RABBIT_USER}"
+      RABBIT_PASSWORD: "${RABBIT_PASSWORD}"
+    entrypoint: sh -c "celery -A app.core.celery.celery:celery beat --loglevel=INFO"
+    networks:
+      - ylab_network
+    depends_on:
+      celery_worker:
+        condition: service_started
 
 volumes:
   postgres-data:
   shared-volume:
   redis-data:
+  redis-config:
+  rabbit-data:
 
 networks:
   ylab_network:

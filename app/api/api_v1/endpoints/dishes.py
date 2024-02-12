@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import DBAPIError
 
 from app.api import depends
 from app.schemas.dish import DishNotFound, DishScheme, DishSchemeAdd
@@ -32,16 +33,17 @@ async def post_dish(submenu_id: int, dish: DishSchemeAdd, service: Services = De
 
 @router.get('/{dish_id}', response_model=DishScheme, responses={**responses})
 async def get_dish_id(dish_id: int, service: Services = Depends(depends.get_services)):
-    dish = await service.dish.get_id(dish_id)
-    if dish is not None:
+    if dish := await service.dish.get_id(dish_id):
         return dish
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='dish not found')
 
 
 @router.patch('/{dish_id}', response_model=DishScheme)
 async def patch_dish_id(dish_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
-    await service.dish.update(dish_id, dish)
-    return await service.dish.get_id(dish_id)
+    try:
+        return await service.dish.update(dish_id, dish)
+    except DBAPIError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='dish not found')
 
 
 @router.delete('/{dish_id}', status_code=status.HTTP_200_OK)

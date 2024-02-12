@@ -31,6 +31,6 @@ class SubmenuRepository(Repository[Submenu]):
         await self.session.commit()
         return new_submenu
 
-    async def get_by_menu_id(self, menu_id: int | str) -> Sequence[Submenu] | None:
+    async def get_by_menu_id(self, menu_id: int | str) -> Sequence[Submenu]:
         submenus = await self.get_many(Submenu.menu_id == menu_id)
         return submenus

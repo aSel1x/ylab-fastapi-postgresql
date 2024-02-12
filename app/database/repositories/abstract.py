@@ -30,7 +30,7 @@ class Repository(Generic[AbstractModel]):
 
     async def get_many(
         self, whereclause=None, limit: int | None = None, order_by=None
-    ) -> Sequence[AbstractModel] | None:
+    ) -> Sequence[AbstractModel]:
         statement = select(self.type_model).limit(limit).order_by(order_by)
         if whereclause:
             statement = statement.where(whereclause)
@@ -48,6 +48,7 @@ class Repository(Generic[AbstractModel]):
     async def update(self, ident: int | str, **values):
         statement = update(self.type_model).values(**values).where(self.type_model.id == int(ident))
         await self.session.execute(statement)
+        await self.session.commit()
 
     @abc.abstractmethod
     async def new(self, *args, **kwargs) -> AbstractModel:

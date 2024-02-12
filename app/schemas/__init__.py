@@ -2,18 +2,25 @@
 Pydantic schemas.
 """
 
-from app.schemas.base import BaseScheme, BaseSchemeAdd
-from app.schemas.menu import MenuScheme, MenuSchemeAdd
-from app.schemas.submenu import SubmenuScheme, SubmenuSchemeAdd
-from app.schemas.dish import DishScheme, DishSchemeAdd
+from .base import BaseScheme, BaseSchemeAdd
+from .menu import MenuScheme, MenuSchemeAdd
+from .submenu import SubmenuScheme, SubmenuSchemeAdd
+from .dish import DishScheme, DishSchemeAdd
+
+from .extra import ExtraScheme
 
 __all__ = (
     'BaseScheme',
     'BaseSchemeAdd',
+
     'MenuScheme',
     'MenuSchemeAdd',
+
     'SubmenuScheme',
     'SubmenuSchemeAdd',
+
     'DishScheme',
     'DishSchemeAdd',
+
+    'ExtraScheme,'
 )

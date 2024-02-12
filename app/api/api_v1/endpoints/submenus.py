@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import DBAPIError
 
 from app.api import depends
 from app.schemas.submenu import SubmenuNotFound, SubmenuScheme, SubmenuSchemeAdd
@@ -30,8 +31,7 @@ async def post_submenu(menu_id: int, submenu: SubmenuSchemeAdd, service: Service
 
 @router.get('/{submenu_id}', response_model=SubmenuScheme, responses={**responses})
 async def get_submenu_id(submenu_id: int, service: Services = Depends(depends.get_services)):
-    submenu = await service.submenu.get_id(submenu_id)
-    if submenu is not None:
+    if submenu := await service.submenu.get_id(submenu_id):
         return submenu
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='submenu not found')
 
@@ -39,8 +39,10 @@ async def get_submenu_id(submenu_id: int, service: Services = Depends(depends.ge
 @router.patch('/{submenu_id}', response_model=SubmenuScheme)
 async def patch_submenu_id(submenu_id: int, submenu: SubmenuSchemeAdd,
                            service: Services = Depends(depends.get_services)):
-    await service.submenu.update(submenu_id, submenu)
-    return await service.submenu.get_id(submenu_id)
+    try:
+        return await service.submenu.update(submenu_id, submenu)
+    except DBAPIError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='submenu not found')
 
 
 @router.delete('/{submenu_id}', status_code=status.HTTP_200_OK)
