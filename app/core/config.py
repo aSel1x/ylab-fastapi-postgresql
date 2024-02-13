@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     )
 
     TEST_MODE: bool
+    DEVELOPER: bool | None = False
 
     # POSTGRES DATABASE
     POSTGRES_HOST: str
@@ -57,10 +58,19 @@ class Settings(BaseSettings):
 
     @property
     def redis(self) -> redis.Redis:
-        url = 'redis://:119733@{host}:6379'.format(
+        url = 'redis://:{pwd}@{host}:6379'.format(
+            pwd=self.REDIS_PASSWORD,
             host=self.REDIS_HOST,
         )
         return redis.from_url(url + '/0' if not self.TEST_MODE else url + '/1')
+
+    @property
+    def redis_dns(self) -> str:
+        url = 'redis://:{pwd}@{host}:6379'.format(
+            pwd=self.REDIS_PASSWORD,
+            host=self.REDIS_HOST,
+        )
+        return url + '/0' if not self.TEST_MODE else url + '/1'
 
     @property
     def rabbit_dns(self):

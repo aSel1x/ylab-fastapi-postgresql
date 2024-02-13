@@ -47,8 +47,9 @@ class GoogleAuth:
         return df
 
     def dataframe_to_sheet(self, df: pd.DataFrame):
-        df_new = df.copy()
+        df_new = df.copy(deep=True)
         service = build('sheets', 'v4', credentials=self.CREDENTIAL)
+        df_new = df_new.applymap(lambda x: int(x) if isinstance(x, pd.Int64Dtype().type) else x)
         df_new.fillna('', inplace=True)
         body = {'values': df_new.values.tolist()}
         (
