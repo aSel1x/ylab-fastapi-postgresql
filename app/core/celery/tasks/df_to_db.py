@@ -1,50 +1,22 @@
 import json
-import os
+from typing import Sequence
 
 import pandas as pd
-import requests
 
-from app import app
+from app.api.depends import get_services
 from app.core.config import settings
 from app.core.excel import excel_to_dataframe, save_df_to_excel
 from app.core.google import GoogleAuth
-
-current_dir = os.getcwd()
-file_path = os.path.join(current_dir, 'admin', 'Menu.xlsx')
-
-
-class APIClient:
-    def __init__(self):
-        self.base = 'http://0.0.0.0:8000' if settings.DEVELOPER else 'http://restaurant_ylab:8000'
-
-    def fetch(self, path: str, **params) -> dict:
-        return requests.get(
-            self.base + app.url_path_for(path, **params)
-        ).json()
-
-    def post(self, path: str, _json: dict, **params) -> dict:
-        return requests.post(
-            self.base + app.url_path_for(path, **params),
-            json=_json
-        ).json()
-
-    def patch(self, path: str, _json: dict, **params) -> dict:
-        return requests.patch(
-            self.base + app.url_path_for(path, **params),
-            json=_json
-        ).json()
-
-    def delete(self, path: str, **params) -> None:
-        requests.delete(
-            self.base + app.url_path_for(path, **params),
-        )
+from app.database.models import Menu
+from app.schemas import DishSchemeAdd, MenuSchemeAdd, SubmenuSchemeAdd
+from app.schemas.extra import MenuPlus
 
 
 class DataFrameToDB:
     def __init__(self):
         self.df_before = pd.DataFrame()
 
-    def process(self, df: pd.DataFrame):
+    async def process(self, df: pd.DataFrame):
 
         if not self.df_before.empty and df.equals(self.df_before):
             return
@@ -52,125 +24,160 @@ class DataFrameToDB:
         self.df_before = df.copy()
 
         cascades: dict[int, dict[int, list[int]]] = {}
-        apiCli = APIClient()
 
-        for row, col in enumerate(df.iloc[:, 1]):
+        async for service in get_services():
 
-            if isinstance(col, str) and isinstance(df.iloc[row, 2], str):
-                menu = {
-                    'title': col,
-                    'description': df.iloc[row, 2],
-                }
-                if (menu_id := df.iloc[row, 0]) and pd.notna(menu_id):
-                    last_menu_id = int(menu_id)
-                    cascades[last_menu_id] = {}
-                    try:
-                        if _df_before.iloc[row, 0] == menu_id \
-                                and _df_before.iloc[row, 1] == col \
-                                and _df_before.iloc[row, 2] == df.iloc[row, 2]:
-                            continue
-                    except IndexError:
-                        pass
-                    apiCli.patch(path='patch_menu_id', _json=menu, menu_id=last_menu_id)
-                else:
-                    response = apiCli.post(path='post_menu', _json=menu)
-                    last_menu_id = int(response['id'])
-                    cascades[last_menu_id] = {}
-                    df.iloc[row, 0] = last_menu_id
-                    self.df_before = df.copy()
-                    save_df_to_excel(df)
-                    GoogleAuth().dataframe_to_sheet(df)
+            for i, row in df.iterrows():
 
-            if isinstance(df.iloc[row, 2], str) and isinstance(df.iloc[row, 3], str):
-                submenu = {
-                    'title': df.iloc[row, 2],
-                    'description': df.iloc[row, 3],
-                }
-                if (submenu_id := df.iloc[row, 1]) and pd.notna(submenu_id):
-                    last_submenu_id = int(submenu_id)
-                    cascades[last_menu_id][last_submenu_id] = []
-                    try:
-                        if _df_before.iloc[row, 1] == submenu_id \
-                                and _df_before.iloc[row, 2] == df.iloc[row, 2] \
-                                and _df_before.iloc[row, 3] == df.iloc[row, 3]:
-                            continue
-                    except IndexError:
-                        pass
-                    apiCli.patch(path='patch_submenu_id', _json=submenu,
-                                 menu_id=last_menu_id, submenu_id=last_submenu_id)
-                else:
-                    response = apiCli.post(path='post_submenu', _json=submenu, menu_id=last_menu_id)
-                    last_submenu_id = int(response['id'])
-                    cascades[last_menu_id][last_submenu_id] = []
-                    df.iloc[row, 1] = last_submenu_id
-                    self.df_before = df.copy()
-                    save_df_to_excel(df)
-                    GoogleAuth().dataframe_to_sheet(df)
-
-            if isinstance(df.iloc[row, 3], str) and isinstance(df.iloc[row, 4], str):
-                dish = {
-                    'title': df.iloc[row, 3],
-                    'description': df.iloc[row, 4],
-                    'price': df.iloc[row, 5],
-                }
-                if (dish_id := df.iloc[row, 2]) and pd.notna(dish_id):
-                    last_dish_id = int(dish_id)
-                    cascades[last_menu_id][last_submenu_id].append(last_dish_id)
-                    try:
-                        if _df_before.iloc[row, 2] == dish_id \
-                                and _df_before.iloc[row, 3] == df.iloc[row, 3] \
-                                and _df_before.iloc[row, 4] == df.iloc[row, 4] \
-                                and _df_before.iloc[row, 5] == df.iloc[row, 5] \
-                                and _df_before.iloc[row, 6] == df.iloc[row, 6]:
-                            continue
-                    except IndexError:
-                        pass
-                    apiCli.patch(path='patch_dish_id', _json=dish, menu_id=last_menu_id,
-                                 submenu_id=last_submenu_id, dish_id=last_dish_id)
-                else:
-                    response = apiCli.post(path='post_dish', _json=dish,
-                                           menu_id=last_menu_id, submenu_id=last_submenu_id)
-                    last_dish_id = int(response['id'])
-                    cascades[last_menu_id][last_submenu_id].append(last_dish_id)
-                    df.iloc[row, 2] = last_dish_id
-                    self.df_before = df.copy()
-                    save_df_to_excel(df)
-                    GoogleAuth().dataframe_to_sheet(df)
-
-                dish_discount = int(df.iloc[row, 6]) if pd.notna(df.iloc[row, 6]) else 0
-                if (dishes_discounts := settings.redis.get('dishes_discounts')) and isinstance(dishes_discounts, bytes):
-                    dishes_discounts = json.loads(dishes_discounts)
-                    dishes_discounts[last_dish_id] = dish_discount
-                else:
-                    dishes_discounts = {last_dish_id: dish_discount}
-
-                settings.redis.set('dishes_discounts', json.dumps(dishes_discounts))
-
-        all_from_api = apiCli.fetch('get_all')
-        for menu in all_from_api['menus']:
-            menu_id = int(menu['id'])
-            if menu_id not in cascades:
-                apiCli.delete(path='delete_menu_id', menu_id=menu_id)
-            else:
-                for submenu in menu['submenus']:
-                    submenu_id = int(submenu['id'])
-                    if submenu_id not in cascades[menu_id]:
-                        apiCli.delete(path='delete_submenu_id', menu_id=menu_id, submenu_id=submenu_id)
+                if isinstance(_title := row[1], str) and isinstance(_description := row[2], str):
+                    menu = MenuSchemeAdd(
+                        title=_title,
+                        description=_description
+                    )
+                    menu_id = int(menu_id) if (menu_id := row[0]) and pd.notna(menu_id) else None
+                    if menu_id is None:
+                        response = await service.menu.new(
+                            title=menu.title,
+                            description=menu.description
+                        )
+                        menu_id = response.id
+                        cascades[menu_id], df.iloc[i, 0] = {}, menu_id
+                        self.df_before = df.copy()
+                        save_df_to_excel(df)
+                        GoogleAuth().dataframe_to_sheet(df)
+                        continue
                     else:
-                        for dish in submenu['dishes']:
-                            dish_id = int(dish['id'])
-                            if dish_id not in cascades[menu_id][submenu_id]:
-                                apiCli.delete('delete_dish_id', menu_id=menu_id,
-                                              submenu_id=submenu_id, dish_id=dish_id)
+                        cascades[menu_id] = {}
+                        try:
+                            if _df_before.iloc[i, 0] == menu_id \
+                                    and _df_before.iloc[i, 1] == _title \
+                                    and _df_before.iloc[i, 2] == _description:
+                                continue
+                            else:
+                                pass
+                        except IndexError:
+                            pass
+
+                        await service.menu.update(
+                            ident=menu_id,
+                            scheme=menu,
+                        )
+
+                if isinstance(_title := row[2], str) and isinstance(_description := row[3], str):
+                    submenu = SubmenuSchemeAdd(
+                        title=_title,
+                        description=_description
+                    )
+                    submenu_id = int(submenu_id) if (submenu_id := row[1]) and pd.notna(submenu_id) else None
+                    if submenu_id is None:
+                        response = await service.submenu.new(
+                            menu_id=menu_id,  # type: ignore
+                            title=submenu.title,
+                            description=submenu.description
+                        )
+                        submenu_id = response.id
+                        cascades[menu_id][submenu_id], df.iloc[i, 1] = [], submenu_id  # type: ignore
+                        self.df_before = df.copy()
+                        save_df_to_excel(df)
+                        GoogleAuth().dataframe_to_sheet(df)
+                        continue
+                    else:
+                        cascades[menu_id][submenu_id] = []  # type: ignore
+                        try:
+                            if _df_before.iloc[i, 1] == submenu_id \
+                                    and _df_before.iloc[i, 2] == _title \
+                                    and _df_before.iloc[i, 3] == _description:
+                                continue
+                            else:
+                                pass
+                        except IndexError:
+                            pass
+
+                        await service.submenu.update(
+                            ident=submenu_id,
+                            scheme=submenu,
+                        )
+
+                if isinstance(_title := row[3], str) and isinstance(_description := row[4], str):
+                    dish = DishSchemeAdd(
+                        title=_title,
+                        description=_description,
+                        price=row[5]
+                    )
+                    dish_id = int(dish_id) if (dish_id := row[2]) and pd.notna(dish_id) else None
+
+                    if not dish_id:
+                        response = await service.dish.new(
+                            submenu_id=submenu_id,  # type: ignore
+                            title=dish.title,
+                            description=dish.description,
+                            price=dish.price
+                        )
+                        dish_id = response.id
+                        cascades[menu_id][submenu_id].append(dish_id)  # type: ignore
+                        df.iloc[i, 2] = dish_id
+                        self.df_before = df.copy()
+                        save_df_to_excel(df)
+                        GoogleAuth().dataframe_to_sheet(df)
+                    else:
+                        cascades[menu_id][submenu_id].append(dish_id)  # type: ignore
+                        try:
+                            if _df_before.iloc[row, 2] == dish_id \
+                                    and _df_before.iloc[row, 3] == _title \
+                                    and _df_before.iloc[row, 4] == _description \
+                                    and _df_before.iloc[row, 5] == row[5]:
+                                pass
+                            else:
+                                pass
+                        except IndexError:
+                            pass
+
+                        await service.dish.update(
+                            ident=dish_id,
+                            scheme=dish,
+                        )
+
+                    dish_discount = int(row[6]) if pd.notna(row[6]) else 0
+
+                    if (dishes_discounts := settings.redis.get('dishes_discounts')) \
+                            and isinstance(dishes_discounts, bytes):
+                        dishes_discounts = json.loads(dishes_discounts)
+                        dishes_discounts[dish_id] = dish_discount
+                    else:
+                        dishes_discounts = {dish_id: dish_discount}
+
+                    settings.redis.set('dishes_discounts', json.dumps(dishes_discounts))
+
+            all_from_api: Sequence[MenuPlus | Menu] = await service.menu.get_all_extra()
+            for menu in all_from_api:
+                menu_id = int(menu.id)
+                if menu_id not in cascades:
+                    await service.menu.delete(
+                        ident=menu_id,
+                    )
+                else:
+                    for submenu in menu.submenus:
+                        submenu_id = int(submenu.id)
+                        if submenu_id not in cascades[menu_id]:
+                            await service.submenu.delete(
+                                ident=submenu_id,
+                            )
+                        else:
+                            for dish in submenu.dishes:
+                                dish_id = int(dish.id)
+                                if dish_id not in cascades[menu_id][submenu_id]:
+                                    await service.dish.delete(
+                                        ident=dish_id,
+                                    )
 
 
 google = GoogleAuth()
 dttdb = DataFrameToDB()
 
 
-def refresh_db_from_excel():
-    dttdb.process(excel_to_dataframe())
+async def refresh_db_from_excel():
+    await dttdb.process(excel_to_dataframe())
 
 
-def refresh_db_from_google():
-    dttdb.process(google.sheet_to_dataframe())
+async def refresh_db_from_google():
+    await dttdb.process(google.sheet_to_dataframe())

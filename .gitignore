@@ -243,4 +243,4 @@ test.py
 tests.sh
 app.sh
 archive
-.env.developer.hidden
+.env.developer
