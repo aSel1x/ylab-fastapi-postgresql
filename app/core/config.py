@@ -23,8 +23,8 @@ class Settings(BaseSettings):
 
     # RABBIT BROKER
     RABBIT_HOST: str | None = None
-    RABBITMQ_DEFAULT_USER: str | None
-    RABBITMQ_DEFAULT_PASS: str | None
+    RABBITMQ_DEFAULT_USER: str | None = None
+    RABBITMQ_DEFAULT_PASS: str | None = None
 
     @property
     def pg_dns(self):
