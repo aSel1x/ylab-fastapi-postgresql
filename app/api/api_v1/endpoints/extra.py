@@ -8,5 +8,5 @@ router = APIRouter()
 
 
 @router.get('/all', response_model=ExtraScheme)
-async def get_all(service: Services = Depends(depends.get_services)):
+async def get_all(service: Services = Depends(depends.get_services)) -> ExtraScheme:
     return ExtraScheme(menus=await service.menu.get_all_extra())

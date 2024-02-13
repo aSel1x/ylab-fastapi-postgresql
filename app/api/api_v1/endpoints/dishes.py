@@ -1,7 +1,10 @@
+from typing import Sequence
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import DBAPIError
 
 from app.api import depends
+from app.database.models import Dish
 from app.schemas.dish import DishNotFound, DishScheme, DishSchemeAdd
 from app.services import Services
 
@@ -17,12 +20,19 @@ responses = {
 
 
 @router.get('', response_model=list[DishScheme])
-async def get_dishes(submenu_id: int, service: Services = Depends(depends.get_services)):
+async def get_dishes(
+        submenu_id: int,
+        service: Services = Depends(depends.get_services)
+) -> Sequence[DishScheme | Dish]:
     return await service.dish.get_by_submenu_id(submenu_id)
 
 
 @router.post('', response_model=DishScheme, status_code=status.HTTP_201_CREATED)
-async def post_dish(submenu_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
+async def post_dish(
+        submenu_id: int,
+        dish: DishSchemeAdd,
+        service: Services = Depends(depends.get_services)
+) -> DishScheme | Dish:
     return await service.dish.new(
         title=dish.title,
         description=dish.description,
@@ -32,14 +42,21 @@ async def post_dish(submenu_id: int, dish: DishSchemeAdd, service: Services = De
 
 
 @router.get('/{dish_id}', response_model=DishScheme, responses={**responses})
-async def get_dish_id(dish_id: int, service: Services = Depends(depends.get_services)):
+async def get_dish_id(
+        dish_id: int,
+        service: Services = Depends(depends.get_services)
+) -> DishScheme | Dish | HTTPException:
     if dish := await service.dish.get_id(dish_id):
         return dish
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='dish not found')
 
 
 @router.patch('/{dish_id}', response_model=DishScheme)
-async def patch_dish_id(dish_id: int, dish: DishSchemeAdd, service: Services = Depends(depends.get_services)):
+async def patch_dish_id(
+        dish_id: int,
+        dish: DishSchemeAdd,
+        service: Services = Depends(depends.get_services)
+) -> DishScheme | Dish | HTTPException:
     try:
         return await service.dish.update(dish_id, dish)
     except DBAPIError:
@@ -47,5 +64,5 @@ async def patch_dish_id(dish_id: int, dish: DishSchemeAdd, service: Services = D
 
 
 @router.delete('/{dish_id}', status_code=status.HTTP_200_OK)
-async def delete_dish_id(dish_id: int, service: Services = Depends(depends.get_services)):
+async def delete_dish_id(dish_id: int, service: Services = Depends(depends.get_services)) -> None:
     await service.dish.delete(dish_id)

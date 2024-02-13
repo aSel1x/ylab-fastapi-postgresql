@@ -46,7 +46,7 @@ class MenuService(BaseService[Menu]):
         self.background.add_task(self.redis_repository.save, new_menu)
         return new_menu
 
-    async def get_all(self) -> Sequence[Menu] | Sequence[MenuScheme] | None:
+    async def get_all(self) -> Sequence[Menu | MenuScheme]:
         if cache := await self.redis_repository.get_all():
             return cache
         return await self.db_repository.get_many()

@@ -6,18 +6,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - .env
     environment:
-      TEST_MODE: 1
-      POSTGRES_HOST: "tests_postgres_ylab"
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      POSTGRES_DATABASE: "${POSTGRES_DATABASE}"
-      REDIS_HOST: "tests_redis_ylab"
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
-      RABBIT_HOST: "rabbitmq_ylab"
-      RABBIT_USER: "${RABBIT_USER}"
-      RABBIT_PASSWORD: "${RABBIT_PASSWORD}"
+      - TEST_MODE=1
+      - POSTGRES_HOST=tests_postgres_ylab
+      - POSTGRES_DB=${POSTGRES_DB}_test
+      - REDIS_HOST=tests_redis_ylab
     entrypoint: sh -c "pytest tests/"
     volumes:
       - tests-shared-volume:/app/generated_files
@@ -32,11 +27,10 @@ services:
   tests_postgres_ylab:
     container_name: tests_postgres_ylab
     image: postgres:15.1-alpine
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: "${POSTGRES_DATABASE}_test"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      PGUSER: "postgres"
+      - POSTGRES_DB=${POSTGRES_DB}_test
     volumes:
       - tests-postgres-data:/var/lib/postgresql/data
     expose:
@@ -44,11 +38,10 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD", "pg_isready"]
+      test: ["CMD-SHELL", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}_test"]
       interval: 10s
       timeout: 30s
       retries: 5
-      start_period: 80s
     networks:
       - tests_ylab_network
 

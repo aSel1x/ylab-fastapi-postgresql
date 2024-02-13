@@ -12,19 +12,19 @@ class Settings(BaseSettings):
 
     # POSTGRES DATABASE
     POSTGRES_HOST: str
-    POSTGRES_PORT: int
+    POSTGRES_PORT: int | None = 5432
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
-    POSTGRES_DATABASE: str
+    POSTGRES_DB: str
 
     # REDIS DATABASE
     REDIS_HOST: str
     REDIS_PASSWORD: str | None
 
     # RABBIT BROKER
-    RABBIT_HOST: str
-    RABBIT_USER: str | None
-    RABBIT_PASSWORD: str | None
+    RABBIT_HOST: str | None = None
+    RABBITMQ_DEFAULT_USER: str | None
+    RABBITMQ_DEFAULT_PASS: str | None
 
     @property
     def pg_dns(self):
@@ -33,9 +33,9 @@ class Settings(BaseSettings):
             pwd=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_HOST,
             port=self.POSTGRES_PORT,
-            name=self.POSTGRES_DATABASE,
+            name=self.POSTGRES_DB,
         )
-        return url if not self.TEST_MODE else url + '_test'
+        return url
 
     @property
     def sync_pg_dns(self):
@@ -44,9 +44,9 @@ class Settings(BaseSettings):
             pwd=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_HOST,
             port=self.POSTGRES_PORT,
-            name=self.POSTGRES_DATABASE,
+            name=self.POSTGRES_DB,
         )
-        return url if not self.TEST_MODE else url + '_test'
+        return url
 
     @property
     def aioredis(self) -> redis.asyncio.Redis:
@@ -76,8 +76,8 @@ class Settings(BaseSettings):
     def rabbit_dns(self):
         url = 'amqp://{user}:{pwd}@{host}:5672//'.format(
             host=self.RABBIT_HOST,
-            user=self.RABBIT_USER,
-            pwd=self.RABBIT_PASSWORD,
+            user=self.RABBITMQ_DEFAULT_USER,
+            pwd=self.RABBITMQ_DEFAULT_PASS,
         )
         return url
 
